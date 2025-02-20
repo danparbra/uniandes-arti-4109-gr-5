@@ -1,12 +1,18 @@
 resource "aws_lambda_function" "matching_engine_lambda" {
   function_name                  = "matching_engine_lambda"
-  filename                       = "matching_engine_lambda.zip"
+  filename                       = "../lambda.zip"
   role                           = aws_iam_role.matching_engine_lambda_role.arn
-  source_code_hash               = filebase64sha256("../matching_engine_lambda.zip")
-  runtime                        = "python3.6"
+  source_code_hash               = data.archive_file.lambda_zip.output_base64sha256
+  runtime                        = "python3.9"
   handler                        = "main.handler"
-  reserved_concurrent_executions = 1000
-  timeout                        = 60
+  reserved_concurrent_executions = -1
+  timeout                        = 30
+}
+
+data "archive_file" "lambda_zip" {
+  source_dir  = "../src/matching_engine_lambda/"
+  output_path = "../lambda.zip"
+  type        = "zip"
 }
 
 resource "aws_lambda_event_source_mapping" "event_source_mapping" {
