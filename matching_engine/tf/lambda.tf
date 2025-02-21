@@ -22,6 +22,19 @@ resource "aws_lambda_event_source_mapping" "event_source_mapping" {
   batch_size       = 10
 }
 
+resource "aws_lambda_function_url" "matching_engine_lambda_url" {
+  function_name      = aws_lambda_function.matching_engine_lambda.function_name
+  authorization_type = "NONE"
+}
+
+resource "aws_lambda_permission" "allows_sqs_to_trigger_lambda" {
+  statement_id  = "AllowExecutionFromSQS"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.matching_engine_lambda.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = aws_sqs_queue.cola_peticiones_fifo.arn
+}
+
 resource "aws_iam_role" "matching_engine_lambda_role" {
   name               = "matching-engine-lambda-role"
   assume_role_policy = <<EOF
