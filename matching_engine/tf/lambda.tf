@@ -16,10 +16,14 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_event_source_mapping" "event_source_mapping" {
-  event_source_arn = aws_sqs_queue.cola_peticiones_fifo.arn
-  function_name    = aws_lambda_function.matching_engine_lambda.arn
-  enabled          = true
-  batch_size       = 10
+  event_source_arn        = aws_sqs_queue.cola_peticiones_fifo.arn
+  function_name           = aws_lambda_function.matching_engine_lambda.arn
+  enabled                 = true
+  batch_size              = 10
+  function_response_types = ["ReportBatchItemFailures"]
+  scaling_config {
+    maximum_concurrency = 3
+  }
 }
 
 resource "aws_lambda_function_url" "matching_engine_lambda_url" {
@@ -67,7 +71,7 @@ resource "aws_iam_policy" "matching_engine_lambda_policy" {
         "sqs:GetQueueAttributes"
       ],
       "Effect": "Allow",
-      "Resource": "${aws_sqs_queue.cola_peticiones_fifo.arn}"
+      "Resource": "arn:aws:sqs:${var.aws_region}:${var.aws_account_id}:*"
     },
     {
       "Action": [
